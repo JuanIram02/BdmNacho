@@ -1,0 +1,183 @@
+/* custom.css */
+
+/* Colores personalizados */
+
+section {
+    margin-top: 100px;
+}
+:root {
+    --beige-color: #f5f5dc;
+    --light-teal-color: #aed9e0;
+    --soft-coral-color: #ff6f61;
+    --text-color: #333;
+    --input-bg-color: #fffaf0;
+    --border-color: #ddd;
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: Arial, sans-serif;
+    background-image: url('../../Imagenes/Fondo.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: #333;
+}
+
+.container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1, h4 {
+    color: var(--text-color);
+    text-align: center;
+}
+
+.form-label {
+    color: var(--text-color);
+    font-weight: bold;
+}
+
+.form-control, .form-select {
+    background-color: var(--input-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    margin-bottom: 15px;
+    padding: 10px;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--light-teal-color);
+    outline: none;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Estilo del botón */
+.btn {
+    background-color: var(--soft-coral-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #e55b52;
+}
+
+.img-preview {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.video-preview {
+    width: 100%;
+    max-height: 250px;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+#nivelesContainer {
+    background-color: var(--input-bg-color);
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.nivel-item {
+    margin-bottom: 5px;
+}
+
+.nivel-item input {
+    margin-right: 10px;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    width: 90%;
+}
+
+.alert {
+    margin-top: 10px;
+}
+
+.alert-success {
+    background-color: var(--light-teal-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+
+header {
+    position: fixed;
+    background-color: var(--nav-bg-color);
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 15px 100px; /* Ajusté un poco la altura */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+header a {
+    color: var(--nav-text-color);
+    font-weight: 500; /* Peso de la fuente ajustado para mayor estilo */
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+header ul {
+    display: flex;
+}
+
+header ul li {
+    list-style: none;
+}
+
+header ul li a {
+    display: inline-block;
+    padding: 5px 10px;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+header ul li a:hover {
+    color: white;
+    background-color: var(--nav-hover-color);
+}
+
+header ul li:not(:last-child) {
+    margin-right: 20px;
+}
