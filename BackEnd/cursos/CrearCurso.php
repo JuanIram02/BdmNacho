@@ -44,6 +44,8 @@ if ($titulo && $descripcion && $precio && $instructor_id && $imagen) {
         'A', 
         1, 
         $instructor_id, 
+        NULL,
+        NULL,
         'INSERT'
     )";
 

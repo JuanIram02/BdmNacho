@@ -46,6 +46,9 @@ CREATE TABLE IF NOT EXISTS Curso (
     FOREIGN KEY (instructor_id) REFERENCES Usuario(id_usuario) ON DELETE CASCADE
 );
 
+INSERT INTO INSERT INTO `categoria` (`NombreCategoria`, `Descripcion`, `fecha_creacion`, `IDUsuario`) 
+    VALUES ( "root", "root", current_timestamp(), 1)
+
 CREATE TABLE IF NOT EXISTS CursoCategoria (
     curso_id INT NOT NULL COMMENT 'ID del curso',
     categoria_id INT NOT NULL COMMENT 'ID de la categoría',

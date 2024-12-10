@@ -14,19 +14,24 @@ if ($id_curso <= 0) {
     exit;
 }
 
-$query = "CALL SpCurso($id_curso, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SELECT_BY_ID')";
+$stmt = $mysqli->prepare("CALL SpCurso( ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SELECT_BY_ID')");
+$stmt->bind_param("i", $id_curso);
 
-$result = mysqli_query($mysqli, $query);
-
-if ($result) {
-    $curso = mysqli_fetch_assoc($result);
-
-    if ($curso) {
-        echo json_encode(["status" => "success", "curso" => $curso]);
+if ($stmt->execute()) {
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    
+    if ($row) {
+        // Convertir el avatar a base64 si está presente
+        $imagenBlob = $row['imagen'] ?? '';
+        $row['imagen'] = base64_encode($imagenBlob);
+        echo json_encode(['status' => 'success', 'curso' => $row]);
     } else {
-        echo json_encode(["status" => "error", "message" => "Curso no encontrado"]);
+        echo json_encode(['error' => 'Curso no encontrado']);
     }
 } else {
-    echo json_encode(["status" => "error", "message" => "Error al ejecutar la consulta"]);
+    echo json_encode(['error' => 'Error en el procedimiento almacenado']);
 }
+$stmt->close();
+
 ?>

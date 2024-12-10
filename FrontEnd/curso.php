@@ -43,7 +43,7 @@ session_start();
         <div class="row mt-4">
             <div class="col-md-8">
                 <h4>Descripción del curso</h4>
-                <p>Este curso cubre los fundamentos de software y IT...</p>
+                <p id="descripcion">Este curso cubre los fundamentos de software y IT...</p>
                 <div class="video-container">
                     <video controls>
                         <source src="ruta/a/tu/video.mp4" type="video/mp4">
@@ -190,7 +190,7 @@ session_start();
                                 $('.course-header p').text(`Costo total: $${curso.costo}`);
                                 $('.video-container video source').attr('src', curso.video || 'ruta/a/video/default.mp4');
                                 $('.video-container video')[0].load();
-                                $('.course-header + p').text(curso.descripcion);
+                                $('#descripcion').text(curso.descripcion);
 
                                 const carouselInner = $('#cursoCarrusel .carousel-inner');
                                 carouselInner.html(`
@@ -204,7 +204,7 @@ session_start();
                             }
                         },
                         error: function (xhr, status, error) {
-
+                            console.error('Error al cargar los detalles del curso:', status, error, xhr.responseText);
                             alert('Ocurrió un error al cargar los detalles del curso.');
                         }
                     });
