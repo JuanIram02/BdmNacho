@@ -12,10 +12,66 @@ session_start();
     <title>Curso - Detalles</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="./css/index.css">
+    <link rel="stylesheet" href="./css/Landing.css">
 </head>
 <body>
     <!-- Contenedor del Menú -->
-    <div id="menu-container"></div>
+    <header>
+        <a class="navbar-brand" href="index.php">
+            <img src="../Imagenes/cursO.png" alt="Logo" style="height: 40px;">
+        </a>
+        <?php
+        if (isset($_SESSION['id_usuario'])) {
+            // Usuario ha iniciado sesión
+            $tipoUsuario = $_SESSION['tipo'];
+            // Dependiendo del tipo de usuario, mostrar contenido diferente
+            if ($tipoUsuario == 'Estudiante') {
+                ?>
+                <ul>
+                    <li><a href="Perfil.php">
+                        <?php echo $_SESSION['nombre_usuario'] ?>
+                    </a></li>
+                    <li><a href="mis-cursos.php">Mis cursos</a></li>
+                    <li><a href="kardex.php">Kardex</a></li>
+                    <li><a href="mensajeria.php">Chat</a></li>
+                    <li><a href="login.php" onclick="CerrarSesion();">Cerrar sesión</a></li>
+                </ul>
+                <?php
+            } elseif ($tipoUsuario == 'Instructor') {
+                // Mostrar contenido para instructores
+                ?>
+                <ul>
+                    <li><a href="Perfil.php">
+                        <?php echo $_SESSION['nombre_usuario'] ?>
+                    </a></li>
+                    <li><a href="crearCurso.php">Crear curso</a></li>
+                    <li><a href="ventas.php">Reporte de ventas</a></li>
+                    <li><a href="mensajeria.php">Chat</a></li>
+                    <li><a href="login.php" onclick="CerrarSesion();">Cerrar sesión</a></li>
+                </ul>
+                <?php
+            } elseif ($tipoUsuario == 'Administrador') {
+                // Mostrar contenido para administradores
+                ?>
+                <ul>
+                    <li><a href="#">
+                            <?php echo $_SESSION['nombre_usuario'] ?>
+                        </a></li>
+                    <!-- <li><a href="Acceptproducto.php">Productos por aceptar</a></li> -->
+                    <li><a href="reportesAdmin.php">Reportes de usuarios</a></li>
+                    <li><a href="users.php">Chat</a></li>
+                    <li><a href="login.php" onclick="CerrarSesion();">Cerrar sesión</a></li>
+                </ul>
+                <?php
+            }
+        } else {
+            // Usuario no ha iniciado sesión
+            header("Location: login.php");
+            exit();
+        }
+        ?>
+    </header>
+    <section>
 
     <button class="return" onclick="history.back()">Regresar</button>
     <div class="container mt-5">
@@ -28,7 +84,7 @@ session_start();
             <!-- Columna del formulario de tarjeta -->
             <div class="col-md-6">
                 <h2>Compra en línea</h2>
-                <form>
+                <form id="pago-tarjeta">
                     <div class="mb-3">
                         <label for="cardName" class="form-label">Nombre en la tarjeta</label>
                         <input type="text" class="form-control" id="cardName" required>
@@ -69,17 +125,100 @@ session_start();
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                fetch('menu.php')
-                    .then(response => response.text())
-                    .then(data => {
-                        document.getElementById('menu-container').innerHTML = data;
-                    });
 
                 fetch('footer.html')
                     .then(response => response.text())
                     .then(data => {
                         document.getElementById('footer-container').innerHTML = data;
                     });
+            });
+        </script>
+
+        <script>
+            $(document).ready(function () {
+                const urlParams = new URLSearchParams(window.location.search);
+                const idCurso = urlParams.get('id');
+
+                if (idCurso) {
+                    $.ajax({
+                        url: `../BackEnd/cursos/obtenerCurso.php`, 
+                        type: 'GET', 
+                        data: { id: idCurso },
+                        dataType: 'json', 
+                        success: function (data) {
+                            if (data.status === 'success') {
+                                const curso = data.curso;
+
+                                $('.course-header h1').text(curso.titulo);
+                                $('.course-header p').text(`Costo total: $${curso.costo}`);
+                                $('.video-container video source').attr('src', curso.video || 'ruta/a/video/default.mp4');
+                                $('.video-container video')[0].load();
+                                $('#descripcion').text(curso.descripcion);
+
+                                const carouselInner = $('#cursoCarrusel .carousel-inner');
+                                carouselInner.html(`
+                                    <div class="carousel-item active">
+                                        <img src="data:image/jpeg;base64,${curso.imagen}" class="d-block w-100" alt="Imagen del curso">
+                                    </div>
+                                `);
+                            } else {
+                                console.error('Error al obtener los datos del curso:', data.message);
+                                alert('No se pudieron cargar los detalles del curso. Inténtalo más tarde.');
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error al cargar los detalles del curso:', status, error, xhr.responseText);
+                            alert('Ocurrió un error al cargar los detalles del curso.');
+                        }
+                    });
+                } else {
+                    alert('No se proporcionó un ID de curso válido.');
+                }
+
+                $("#btn-comprar").click(function () {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const idCurso = urlParams.get('id');
+                    window.location.href = `comprarcurso.php?id=${idCurso}`;
+                });
+
+                $("#pago-tarjeta").on("submit", function (event) {
+                    event.preventDefault(); // Prevenir el envío por defecto del formulario
+
+                    // Obtener los valores de los campos del formulario
+                    const cardName = $("#cardName").val();
+                    const cardNumber = $("#cardNumber").val();
+                    const cardExpiry = $("#cardExpiry").val();
+                    const cardCVC = $("#cardCVC").val();
+
+                    // Realizar la solicitud AJAX
+                    $.ajax({
+                        url: `../BackEnd/pagos/procesarPago.php`, // Cambiar a la URL adecuada para procesar el pago
+                        type: 'POST',
+                        data: {
+                            nombreTarjeta: cardName,
+                            numeroTarjeta: cardNumber,
+                            vencimientoTarjeta: cardExpiry,
+                            cvcTarjeta: cardCVC
+                        },
+                        dataType: 'json',
+                        success: function (response) {
+                            if (response.status === 'success') {
+                                alert('Pago realizado con éxito. Gracias por tu compra.');
+
+                                // Redirigir o actualizar la página según sea necesario
+                                window.location.href = "confirmacion.html"; // Cambiar según la lógica de tu aplicación
+                            } else {
+                                console.error('Error en el procesamiento del pago:', response.message);
+                                alert('El pago no pudo ser procesado. Por favor, verifica los datos e inténtalo nuevamente.');
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error en la solicitud AJAX:', status, error, xhr.responseText);
+                            alert('Ocurrió un error al procesar el pago. Por favor, inténtalo más tarde.');
+                        }
+                    });
+                });
+
             });
         </script>
     </div>
