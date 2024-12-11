@@ -44,7 +44,7 @@
                     document.getElementById('menu-container').innerHTML = data;
                 });
 
-            fetch('footer.php')
+            fetch('footer.html')
                 .then(response => response.text())
                 .then(data => {
                     document.getElementById('footer-container').innerHTML = data;

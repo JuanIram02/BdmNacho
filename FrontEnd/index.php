@@ -166,8 +166,10 @@ session_start();
                             $("#categories-select").append('<option value="">Selecciona una categoría</option>');
 
                             categorias.forEach(function (categoria) {
-                                const option = `<option value="${categoria.id_categoria}">${categoria.nombre}</option>`;
-                                $("#categories-select").append(option);
+                                if(categoria.nombre !== root){
+                                    const option = `<option value="${categoria.id_categoria}">${categoria.nombre}</option>`;
+                                    $("#categories-select").append(option);
+                                }
                             });
                         } else {
                             $("#categories-select").html('<option value="">No se encontraron categorías</option>');

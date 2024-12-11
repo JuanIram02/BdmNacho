@@ -11,11 +11,67 @@ session_start();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Curso - Detalles</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="./css/Landing.css">
     <link rel="stylesheet" href="./css/index.css">
 </head>
 <body>
     <!-- Contenedor del Menú -->
-    <div id="menu-container"></div>
+    <header>
+        <a class="navbar-brand" href="index.php">
+            <img src="../Imagenes/cursO.png" alt="Logo" style="height: 40px;">
+        </a>
+        <?php
+        if (isset($_SESSION['id_usuario'])) {
+            // Usuario ha iniciado sesión
+            $tipoUsuario = $_SESSION['tipo'];
+            // Dependiendo del tipo de usuario, mostrar contenido diferente
+            if ($tipoUsuario == 'Estudiante') {
+                ?>
+                <ul>
+                    <li><a href="Perfil.php">
+                        <?php echo $_SESSION['nombre_usuario'] ?>
+                    </a></li>
+                    <li><a href="mis-cursos.php">Mis cursos</a></li>
+                    <li><a href="kardex.php">Kardex</a></li>
+                    <li><a href="mensajeria.php">Chat</a></li>
+                    <li><a href="login.php" onclick="CerrarSesion();">Cerrar sesión</a></li>
+                </ul>
+                <?php
+            } elseif ($tipoUsuario == 'Instructor') {
+                // Mostrar contenido para instructores
+                ?>
+                <ul>
+                    <li><a href="Perfil.php">
+                        <?php echo $_SESSION['nombre_usuario'] ?>
+                    </a></li>
+                    <li><a href="crearCurso.php">Crear curso</a></li>
+                    <li><a href="ventas.php">Reporte de ventas</a></li>
+                    <li><a href="mensajeria.php">Chat</a></li>
+                    <li><a href="login.php" onclick="CerrarSesion();">Cerrar sesión</a></li>
+                </ul>
+                <?php
+            } elseif ($tipoUsuario == 'Administrador') {
+                // Mostrar contenido para administradores
+                ?>
+                <ul>
+                    <li><a href="#">
+                            <?php echo $_SESSION['nombre_usuario'] ?>
+                        </a></li>
+                    <!-- <li><a href="Acceptproducto.php">Productos por aceptar</a></li> -->
+                    <li><a href="reportesAdmin.php">Reportes de usuarios</a></li>
+                    <li><a href="users.php">Chat</a></li>
+                    <li><a href="login.php" onclick="CerrarSesion();">Cerrar sesión</a></li>
+                </ul>
+                <?php
+            }
+        } else {
+            // Usuario no ha iniciado sesión
+            header("Location: login.php");
+            exit();
+        }
+        ?>
+    </header>
+    <section>
 
     <button class="return" onclick="history.back()">Regresar</button>
     <div class="container mt-5">
@@ -23,19 +79,6 @@ session_start();
             <h1>Curso de IT & Software</h1>
             <div class="form-group">
                 <label for="nivelSelect">Niveles:</label>
-                <select id="nivelSelect" class="form-select mt-2">
-                    <option value="">Selecciona un nivel...</option>
-                    <option value="nivel.html">Nivel 1</option>
-                    <option value="nivel.html">Nivel 2</option>
-                    <option value="nivel.html">Nivel 3</option>
-                    <option value="nivel.html">Nivel 4</option>
-                    <option value="nivel.html">Nivel 5</option>
-                    <option value="nivel.html">Nivel 6</option>
-                    <option value="nivel.html">Nivel 7</option>
-                    <option value="nivel.html">Nivel 8</option>
-                    <option value="nivel.html">Nivel 9</option>
-                    <option value="nivel.html">Nivel 10</option>
-                </select>
             </div>
             <p>Costo total: $49.99</p>
         </div>
@@ -80,7 +123,7 @@ session_start();
 
         <div class="comprar-curso mt-4">
             <h4>Comprar Curso</h4>
-            <button class="btn btn-green" onclick="alert('Este curso no está en venta actualmente')">Comprar</button>
+            <button class="btn btn-green" id="btn-comprar">Comprar</button>
         </div>
 
         <div class="mt-4">
@@ -128,11 +171,6 @@ session_start();
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                fetch('menu.php')
-                    .then(response => response.text())
-                    .then(data => {
-                        document.getElementById('menu-container').innerHTML = data;
-                    });
 
                 fetch('footer.html')
                     .then(response => response.text())
@@ -141,12 +179,12 @@ session_start();
                     });
             });
 
-            document.getElementById('nivelSelect').addEventListener('change', function() {
-                const selectedLevel = this.value;
-                if (selectedLevel) {
-                    window.location.href = selectedLevel;
-                }
-            });
+            // document.getElementById('nivelSelect').addEventListener('change', function() {
+            //     const selectedLevel = this.value;
+            //     if (selectedLevel) {
+            //         window.location.href = selectedLevel;
+            //     }
+            // });
         </script>
 
         <script>
@@ -211,6 +249,12 @@ session_start();
                 } else {
                     alert('No se proporcionó un ID de curso válido.');
                 }
+
+                $("#btn-comprar").click(function () {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const idCurso = urlParams.get('id');
+                    window.location.href = `comprarcurso.php?id=${idCurso}`;
+                });
             });
         </script>
 
