@@ -339,4 +339,83 @@ END;
 
 DELIMITER ;
 
+DELIMITER //
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SpNivel`(
+    IN p_id INT,  -- ID del nivel (para UPDATE, DELETE, SELECT)
+    IN p_curso_id INT,  -- ID del curso al que pertenece el nivel
+    IN p_nivel INT,  -- Número del nivel
+    IN p_descripcion TEXT,  -- Descripción del nivel
+    IN p_precio DECIMAL(10, 2),  -- Precio del nivel
+    IN p_url_video VARCHAR(255),  -- URL del video del nivel
+    IN p_video_descripcion TEXT,  -- Descripción del video
+    IN p_duracion TIME,  -- Duración del video
+    IN p_operacion VARCHAR(20)  -- Tipo de operación: INSERT, UPDATE, DELETE, SELECT_BY_ID, SELECT_ALL
+)
+BEGIN
+    IF p_operacion = 'INSERT' THEN
+        -- Insertar un nuevo nivel
+        INSERT INTO Nivel (curso_id, nivel, descripcion, precio)
+        VALUES (p_curso_id, p_nivel, p_descripcion, p_precio);
+        
+        -- Obtener el ID del nivel recién insertado
+        SET @nivel_id = LAST_INSERT_ID();
+        
+        -- Insertar el video para el nivel
+        INSERT INTO NivelVideo (nivel_id, url_video, descripcion, duracion)
+        VALUES (@nivel_id, p_url_video, p_video_descripcion, p_duracion);
+
+    ELSEIF p_operacion = 'UPDATE' THEN
+        -- Actualizar un nivel existente
+        UPDATE Nivel
+        SET nivel = p_nivel,
+            descripcion = p_descripcion,
+            precio = p_precio
+        WHERE id = p_id;
+        
+        -- Actualizar el video asociado al nivel
+        UPDATE NivelVideo
+        SET url_video = p_url_video,
+            descripcion = p_video_descripcion,
+            duracion = p_duracion
+        WHERE nivel_id = p_id;
+
+    ELSEIF p_operacion = 'DELETE' THEN
+        -- Eliminar el video asociado al nivel
+        DELETE FROM NivelVideo
+        WHERE nivel_id = p_id;
+        
+        -- Eliminar el nivel
+        DELETE FROM Nivel
+        WHERE id = p_id;
+
+    ELSEIF p_operacion = 'SELECT_BY_ID' THEN
+        -- Obtener los detalles de un nivel por ID, incluyendo el video
+        SELECT Nivel.*, 
+               NivelVideo.url_video, 
+               NivelVideo.descripcion AS video_descripcion, 
+               NivelVideo.duracion
+        FROM Nivel
+        INNER JOIN NivelVideo ON Nivel.id = NivelVideo.nivel_id
+        WHERE Nivel.id = p_id;
+
+    ELSEIF p_operacion = 'SELECT_ALL' THEN
+        -- Obtener todos los niveles de un curso, con su video
+        SELECT Nivel.*, 
+               NivelVideo.url_video, 
+               NivelVideo.descripcion AS video_descripcion, 
+               NivelVideo.duracion
+        FROM Nivel
+        INNER JOIN NivelVideo ON Nivel.id = NivelVideo.nivel_id
+        WHERE Nivel.curso_id = p_curso_id
+        ORDER BY Nivel.nivel ASC;
+
+    END IF;
+
+END;
+//
+
+DELIMITER ;
+
+
 

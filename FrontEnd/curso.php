@@ -87,9 +87,26 @@ session_start();
             <div class="col-md-8">
                 <h4>Descripción del curso</h4>
                 <p id="descripcion">Este curso cubre los fundamentos de software y IT...</p>
+
+                <div class="tabs-container">
+                    <ul id="tabs" class="nav nav-tabs">
+                        <div class="nav-link active">
+                            <p>Introduccion</p>
+                            <!-- Aquí podemos agregar más detalles del nivel si es necesario -->
+                        </div>
+                        <div class="nav-link">
+                            <p>Nivel 1</p>
+                            <!-- Aquí podemos agregar más detalles del nivel si es necesario -->
+                        </div>
+                        <div class="nav-link">
+                            <p>Nivel 2</p>
+                            <!-- Aquí podemos agregar más detalles del nivel si es necesario -->
+                        </div>
+                    </ul>
+                </div>
                 <div class="video-container">
-                    <video controls>
-                        <source src="ruta/a/tu/video.mp4" type="video/mp4">
+                    <video id="video-player" controls>
+                        <source id="video-source" src="ruta/a/tu/video.mp4" type="video/mp4">
                         Tu navegador no soporta la etiqueta de video.
                     </video>
                 </div>
@@ -214,6 +231,13 @@ session_start();
                 const urlParams = new URLSearchParams(window.location.search);
                 const idCurso = urlParams.get('id');
 
+                let niveles = [];
+
+                function updateVideo(url) {
+                    $('.video-container video source').attr('src', url || 'ruta/a/video/default.mp4');
+                    $('.video-container video')[0].load();
+                }
+
                 if (idCurso) {
                     $.ajax({
                         url: `../BackEnd/cursos/obtenerCurso.php`, 
@@ -246,9 +270,54 @@ session_start();
                             alert('Ocurrió un error al cargar los detalles del curso.');
                         }
                     });
+
+                    $.ajax({
+                        type: "GET", 
+                        url: "../BackEnd/niveles/obtenerNiveles.php", 
+                        data: { id: idCurso },
+                        dataType: "json",
+                        success: function (response) {
+                            $("#tabs").empty();
+
+                            if (response.status === "success") {
+                                niveles = response.niveles;
+
+                                console.log(niveles)
+
+                                niveles.forEach(function (nivel, index) {
+                                    const isActive = index === 0 ? 'active' : '';
+
+                                    const option = `<div class="nav-link ${isActive}" data-index="${index}">
+                                                        <p>${nivel.descripcion}</p>
+                                                        <!-- Aquí podemos agregar más detalles del nivel si es necesario -->
+                                                    </div>`;
+                                    $("#tabs").append(option);
+                                    
+                                });
+
+                                const firstVideo = niveles[0];
+                                updateVideo("../BackEnd/" + firstVideo.url_video);
+                            } 
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("Error al cargar los niveles:", error);
+                        }
+                    });
                 } else {
                     alert('No se proporcionó un ID de curso válido.');
                 }
+
+                $(document).on('click', '.nav-link', function () {
+                    const index = $(this).data('index');
+                    const selectedNivel = niveles[index];  // Usar la variable global niveles
+
+                    // Actualizar la clase active
+                    $(".nav-link").removeClass("active");
+                    $(this).addClass("active");
+
+                    // Actualizar el video en el reproductor
+                    updateVideo("../BackEnd/" + selectedNivel.url_video);
+                });
 
                 $("#btn-comprar").click(function () {
                     const urlParams = new URLSearchParams(window.location.search);

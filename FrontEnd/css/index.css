@@ -293,3 +293,24 @@ body {
     width: 100%;
     max-width: 300px;
 }
+
+.tabs-container{
+    background-color: #333;
+}
+
+.nav-link{
+    width: 150px;
+    cursor: pointer;
+}
+
+.nav-link.active{
+    border-top: 5px solid #cb1a1a !important; /* Color de borde normal */
+    background-color: #333 !important;
+    border-radius: 0.25rem;
+}
+
+.nav-link p{
+    color: white;
+    text-align: center;
+    margin-top: 20px;
+}
