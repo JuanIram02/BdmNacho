@@ -7,7 +7,7 @@ $database = new Database("localhost", "curso", "root", "");
 $database->connect();
 $mysqli = $database->getConnection();
 
-$query = "CALL SpCurso(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SELECT_ALL')";
+$query = "CALL SpCurso(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SELECT_ALL')";
 $result = mysqli_query($mysqli, $query);
 
 if ($result) {

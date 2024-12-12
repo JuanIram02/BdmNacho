@@ -14,7 +14,7 @@ if ($id_curso <= 0) {
     exit;
 }
 
-$stmt = $mysqli->prepare("CALL SpCurso( ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SELECT_BY_ID')");
+$stmt = $mysqli->prepare("CALL SpCurso( ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SELECT_BY_ID')");
 $stmt->bind_param("i", $id_curso);
 
 if ($stmt->execute()) {

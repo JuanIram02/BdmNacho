@@ -14,7 +14,7 @@ if ($categoria_id === 0) {
     exit;
 }
 
-$query = "CALL SpCurso(NULL, NULL, NULL, NULL, NULL, NULL, NULL, $categoria_id, NULL, NULL, NULL, 'SELECT_BY_CATEGORY')";
+$query = "CALL SpCurso(NULL, NULL, NULL, NULL, NULL, NULL, NULL, $categoria_id, NULL, NULL, NULL, NULL, 'SELECT_BY_CATEGORY')";
 
 $result = mysqli_query($mysqli, $query);
 

@@ -108,6 +108,7 @@ END
 DELIMITER ;
 
 DELIMITER //
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SpCurso`(
     IN p_id INT,
     IN p_titulo VARCHAR(255),
@@ -120,12 +121,25 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `SpCurso`(
     IN p_instructor_id INT,
     IN p_fecha_inicio DATE, 
     IN p_fecha_fin DATE,    
+    IN p_url_video VARCHAR(255), 
     IN p_operacion VARCHAR(20)
 )
 BEGIN
     IF p_operacion = 'INSERT' THEN
         INSERT INTO Curso (titulo, descripcion, imagen, costo, curso_completo, estado, categoria_id, instructor_id)
         VALUES (p_titulo, p_descripcion, p_imagen, p_costo, p_curso_completo, p_estado, p_categoria_id, p_instructor_id);
+        
+        INSERT INTO Nivel (curso_id, nivel, descripcion, precio)
+        VALUES (LAST_INSERT_ID(), 1, 'Introducción', 0);
+        
+        INSERT INTO NivelVideo (nivel_id, url_video, descripcion, duracion)
+        VALUES (
+            LAST_INSERT_ID(),  
+            p_url_video,      
+            'Video de introducción para el curso',  
+            '00:05:00'    
+        );
+        
     ELSEIF p_operacion = 'UPDATE' THEN
         UPDATE Curso
         SET titulo = p_titulo,
@@ -137,31 +151,37 @@ BEGIN
             categoria_id = p_categoria_id,
             instructor_id = p_instructor_id
         WHERE id = p_id;
+        
     ELSEIF p_operacion = 'DELETE' THEN
         DELETE FROM Curso
         WHERE id = p_id;
+        
     ELSEIF p_operacion = 'SELECT_BY_ID' THEN
         SELECT * FROM Curso
         WHERE id = p_id;
+        
     ELSEIF p_operacion = 'SELECT_ALL' THEN
         SELECT * FROM Curso;
+        
     ELSEIF p_operacion = 'SELECT_BY_CATEGORY' THEN
         SELECT Curso.*
         FROM Curso
         INNER JOIN CursoCategoria ON Curso.id = CursoCategoria.curso_id
         WHERE CursoCategoria.categoria_id = p_categoria_id;
+        
     ELSEIF p_operacion = 'SELECT_BY_NAME' THEN
         SELECT * FROM Curso
         WHERE titulo LIKE CONCAT('%', p_titulo, '%'); 
+        
     ELSEIF p_operacion = 'SELECT_BY_DATE' THEN
         SELECT * FROM Curso
         WHERE fecha_creacion BETWEEN p_fecha_inicio AND p_fecha_fin; 
     END IF;
+
 END;
 //
+
 DELIMITER ;
-
-
 
 DELIMITER //
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SpCategoria`(
@@ -197,4 +217,126 @@ BEGIN
 END;
 //
 DELIMITER ;
+
+DELIMITER //
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SpPago`(
+    IN p_id INT,
+    IN p_curso_id INT,
+    IN p_estudiante_id INT,
+    IN p_monto DECIMAL(10, 2),
+    IN p_forma_pago CHAR(1),
+    IN p_fecha TIMESTAMP,
+    IN p_operacion VARCHAR(20)
+)
+BEGIN
+    IF p_operacion = 'INSERT' THEN
+        IF EXISTS (
+            SELECT 1 
+            FROM Pago
+            WHERE curso_id = p_curso_id AND estudiante_id = p_estudiante_id
+        ) THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Ya existe un pago registrado para este estudiante y curso.';
+        ELSE
+            INSERT INTO Pago (curso_id, estudiante_id, monto, forma_pago, fecha)
+            VALUES (p_curso_id, p_estudiante_id, p_monto, p_forma_pago, p_fecha);
+        END IF;
+    ELSEIF p_operacion = 'UPDATE' THEN
+        UPDATE Pago
+        SET curso_id = p_curso_id,
+            estudiante_id = p_estudiante_id,
+            monto = p_monto,
+            forma_pago = p_forma_pago,
+            fecha = p_fecha
+        WHERE id = p_id;
+    ELSEIF p_operacion = 'DELETE' THEN
+        DELETE FROM Pago
+        WHERE id = p_id;
+    ELSEIF p_operacion = 'SELECT_BY_ID' THEN
+        SELECT * FROM Pago
+        WHERE id = p_id;
+    ELSEIF p_operacion = 'SELECT_ALL' THEN
+        SELECT * FROM Pago;
+    ELSEIF p_operacion = 'SELECT_BY_CURSO' THEN
+        SELECT * FROM Pago
+        WHERE curso_id = p_curso_id;
+    ELSEIF p_operacion = 'SELECT_BY_ESTUDIANTE' THEN
+        SELECT * FROM Pago
+        WHERE estudiante_id = p_estudiante_id;
+    ELSEIF p_operacion = 'SELECT_BY_FECHA' THEN
+        SELECT * FROM Pago
+        WHERE fecha BETWEEN p_fecha AND CURRENT_TIMESTAMP;
+    END IF;
+END;
+//
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SpInscripcion`(
+    IN p_id INT,
+    IN p_curso_id INT,
+    IN p_estudiante_id INT,
+    IN p_fecha_inscripcion TIMESTAMP,
+    IN p_fecha_ultima TIMESTAMP,
+    IN p_fecha_terminacion TIMESTAMP,
+    IN p_progreso_curso INT,
+    IN p_estado CHAR(1),
+    IN p_precio_pagado DECIMAL(10, 2),
+    IN p_operacion VARCHAR(20)
+)
+BEGIN
+    IF p_operacion = 'INSERT' THEN
+        IF EXISTS (
+            SELECT 1 
+            FROM Inscripcion
+            WHERE curso_id = p_curso_id AND estudiante_id = p_estudiante_id
+        ) THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Ya existe una inscripción registrada para este estudiante y curso.';
+        ELSE
+            INSERT INTO Inscripcion (curso_id, estudiante_id, fecha_inscripcion, fecha_ultima, fecha_terminacion, progreso_curso, estado, precio_pagado)
+            VALUES (p_curso_id, p_estudiante_id, p_fecha_inscripcion, p_fecha_ultima, p_fecha_terminacion, p_progreso_curso, p_estado, p_precio_pagado);
+        END IF;
+    ELSEIF p_operacion = 'UPDATE' THEN
+        UPDATE Inscripcion
+        SET curso_id = p_curso_id,
+            estudiante_id = p_estudiante_id,
+            fecha_inscripcion = p_fecha_inscripcion,
+            fecha_ultima = p_fecha_ultima,
+            fecha_terminacion = p_fecha_terminacion,
+            progreso_curso = p_progreso_curso,
+            estado = p_estado,
+            precio_pagado = p_precio_pagado
+        WHERE id = p_id;
+    ELSEIF p_operacion = 'DELETE' THEN
+        DELETE FROM Inscripcion
+        WHERE id = p_id;
+    ELSEIF p_operacion = 'SELECT_BY_ID' THEN
+        SELECT * FROM Inscripcion
+        WHERE id = p_id;
+    ELSEIF p_operacion = 'SELECT_ALL' THEN
+        SELECT * FROM Inscripcion;
+    ELSEIF p_operacion = 'SELECT_BY_CURSO' THEN
+        SELECT * FROM Inscripcion
+        WHERE curso_id = p_curso_id;
+    ELSEIF p_operacion = 'SELECT_BY_ESTUDIANTE' THEN
+        SELECT * FROM Inscripcion
+        WHERE estudiante_id = p_estudiante_id;
+    ELSEIF p_operacion = 'SELECT_BY_ESTADO' THEN
+        SELECT * FROM Inscripcion
+        WHERE estado = p_estado;
+    ELSEIF p_operacion = 'SELECT_ESTUDIANTE_CURSO' THEN
+        SELECT 1 AS Existe
+        FROM Inscripcion
+        WHERE curso_id = p_curso_id AND estudiante_id = p_estudiante_id
+        LIMIT 1;
+    END IF;
+END;
+//
+
+DELIMITER ;
+
 

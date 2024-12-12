@@ -14,7 +14,7 @@ if (empty($search)) {
     exit;
 }
 
-$query = "CALL SpCurso(NULL, '$search', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SELECT_BY_NAME')";
+$query = "CALL SpCurso(NULL, '$search', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SELECT_BY_NAME')";
 
 $result = mysqli_query($mysqli, $query);
 

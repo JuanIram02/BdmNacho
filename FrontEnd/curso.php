@@ -1,8 +1,8 @@
-<?php
+<!-- <?php
 include "Librerias.php";
 // Verificar si el usuario ha iniciado sesión
 session_start();
-?>
+?> -->
 
 <!DOCTYPE html>
 <html lang="en">

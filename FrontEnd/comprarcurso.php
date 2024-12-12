@@ -13,6 +13,7 @@ session_start();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="./css/index.css">
     <link rel="stylesheet" href="./css/Landing.css">
+    <script src="https://www.paypal.com/sdk/js?client-id=AdFbQWVQCpdfQQ3S61HMQBiHVHhccRi-KhwIjdaacw3PLaYmunffQzNBSiAPZHcTrdQlD5AtpvsxQ4lD&currency=USD"></script>
 </head>
 <body>
     <!-- Contenedor del Menú -->
@@ -101,6 +102,7 @@ session_start();
                         <label for="cardCVC" class="form-label">CVC</label>
                         <input type="text" class="form-control" id="cardCVC" maxlength="3" required>
                     </div>
+                    <input type="hidden" name="amount" id="costo">
                     <button type="submit" class="btn btn-primary">Pagar con tarjeta</button>
                 </form>
             </div>
@@ -113,9 +115,9 @@ session_start();
                     <input type="hidden" name="cmd" value="_xclick">
                     <input type="hidden" name="business" value="tu-email@ejemplo.com">
                     <input type="hidden" name="item_name" value="Curso IT & Software">
-                    <input type="hidden" name="amount" value="49.99">
+                    <input type="hidden" name="amount" id="costoPaypal">
                     <input type="hidden" name="currency_code" value="USD">
-                    <button type="submit" class="btn btn-warning">Pagar con PayPal</button>
+                    <div id="paypal-button-container"></div>
                 </form>
             </div>
         </div>
@@ -139,6 +141,56 @@ session_start();
                 const urlParams = new URLSearchParams(window.location.search);
                 const idCurso = urlParams.get('id');
 
+                paypal.Buttons({
+                    createOrder: function (data, actions) {
+                        const costo = $("#costo").val();
+
+                        return actions.order.create({
+                            purchase_units: [{
+                                amount: {
+                                    value: costo 
+                                },
+                                description: `Pago por el curso ID: ${idCurso}`
+                            }]
+                        });
+                    },
+                    onApprove: function (data, actions) {
+                        
+                        return actions.order.capture().then(function (details) {
+                            
+                            $.ajax({
+                                url: '../BackEnd/pagos/procesarPago.php',
+                                type: 'POST',
+                                data: {
+                                    idCurso: idCurso,
+                                    costo: $("#costo").val(),
+                                    forma_pago: "paypal",
+                                    paypalOrderId: data.orderID
+                                },
+                                dataType: 'json',
+                                success: function (response) {
+                                    if (response.status === 'success') {
+                                        alert('Pago realizado con éxito. Gracias por tu compra.');
+                                        window.location.href = `curso.php?id=${idCurso}`;
+                                    } else {
+                                        console.error('Error en el procesamiento del pago:', response.message);
+                                        alert(response.message);
+                                        window.location.href = `curso.php?id=${idCurso}`;
+                                    }
+                                },
+                                error: function (xhr, status, error) {
+                                    console.error('Error en la solicitud AJAX:', status, error, xhr.responseText);
+                                    alert('Ocurrió un error al procesar el pago. Por favor, inténtalo más tarde.');
+                                }
+                            });
+                        });
+                    },
+                    onError: function (err) {
+                        console.error('Error en PayPal:', err);
+                        alert('Ocurrió un error con PayPal. Por favor, inténtalo más tarde.');
+                    }
+                }).render('#paypal-button-container');
+
                 if (idCurso) {
                     $.ajax({
                         url: `../BackEnd/cursos/obtenerCurso.php`, 
@@ -149,11 +201,14 @@ session_start();
                             if (data.status === 'success') {
                                 const curso = data.curso;
 
+                                console.log(curso)
+
                                 $('.course-header h1').text(curso.titulo);
                                 $('.course-header p').text(`Costo total: $${curso.costo}`);
-                                $('.video-container video source').attr('src', curso.video || 'ruta/a/video/default.mp4');
-                                $('.video-container video')[0].load();
-                                $('#descripcion').text(curso.descripcion);
+
+                                console.log(curso.costo);
+
+                                $('#costo').val(curso.costo);
 
                                 const carouselInner = $('#cursoCarrusel .carousel-inner');
                                 carouselInner.html(`
@@ -182,34 +237,41 @@ session_start();
                 });
 
                 $("#pago-tarjeta").on("submit", function (event) {
-                    event.preventDefault(); // Prevenir el envío por defecto del formulario
+                    event.preventDefault(); 
 
-                    // Obtener los valores de los campos del formulario
                     const cardName = $("#cardName").val();
                     const cardNumber = $("#cardNumber").val();
                     const cardExpiry = $("#cardExpiry").val();
                     const cardCVC = $("#cardCVC").val();
 
-                    // Realizar la solicitud AJAX
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const idCurso = urlParams.get('id');
+
+                    const costo = $("#costo").val();
+
+                    console.log(costo)
+
                     $.ajax({
-                        url: `../BackEnd/pagos/procesarPago.php`, // Cambiar a la URL adecuada para procesar el pago
+                        url: `../BackEnd/pagos/procesarPago.php`,
                         type: 'POST',
                         data: {
                             nombreTarjeta: cardName,
                             numeroTarjeta: cardNumber,
                             vencimientoTarjeta: cardExpiry,
-                            cvcTarjeta: cardCVC
+                            cvcTarjeta: cardCVC,
+                            idCurso: idCurso,
+                            costo: costo,
+                            forma_pago: "tarjeta"
                         },
                         dataType: 'json',
                         success: function (response) {
                             if (response.status === 'success') {
                                 alert('Pago realizado con éxito. Gracias por tu compra.');
-
-                                // Redirigir o actualizar la página según sea necesario
-                                window.location.href = "confirmacion.html"; // Cambiar según la lógica de tu aplicación
+                                window.location.href = `curso.php?id=${idCurso}`;
                             } else {
                                 console.error('Error en el procesamiento del pago:', response.message);
-                                alert('El pago no pudo ser procesado. Por favor, verifica los datos e inténtalo nuevamente.');
+                                alert(response.message);
+                                window.location.href = `curso.php?id=${idCurso}`;
                             }
                         },
                         error: function (xhr, status, error) {
