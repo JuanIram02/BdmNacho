@@ -342,38 +342,33 @@ DELIMITER ;
 DELIMITER //
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SpNivel`(
-    IN p_id INT,  -- ID del nivel (para UPDATE, DELETE, SELECT)
-    IN p_curso_id INT,  -- ID del curso al que pertenece el nivel
-    IN p_nivel INT,  -- Número del nivel
-    IN p_descripcion TEXT,  -- Descripción del nivel
-    IN p_precio DECIMAL(10, 2),  -- Precio del nivel
-    IN p_url_video VARCHAR(255),  -- URL del video del nivel
-    IN p_video_descripcion TEXT,  -- Descripción del video
-    IN p_duracion TIME,  -- Duración del video
-    IN p_operacion VARCHAR(20)  -- Tipo de operación: INSERT, UPDATE, DELETE, SELECT_BY_ID, SELECT_ALL
+    IN p_id INT,
+    IN p_curso_id INT, 
+    IN p_nivel INT,  
+    IN p_descripcion TEXT,  
+    IN p_precio DECIMAL(10, 2), 
+    IN p_url_video VARCHAR(255),
+    IN p_video_descripcion TEXT,
+    IN p_duracion TIME,  
+    IN p_operacion VARCHAR(20)  
 )
 BEGIN
     IF p_operacion = 'INSERT' THEN
-        -- Insertar un nuevo nivel
         INSERT INTO Nivel (curso_id, nivel, descripcion, precio)
         VALUES (p_curso_id, p_nivel, p_descripcion, p_precio);
         
-        -- Obtener el ID del nivel recién insertado
         SET @nivel_id = LAST_INSERT_ID();
         
-        -- Insertar el video para el nivel
         INSERT INTO NivelVideo (nivel_id, url_video, descripcion, duracion)
         VALUES (@nivel_id, p_url_video, p_video_descripcion, p_duracion);
 
     ELSEIF p_operacion = 'UPDATE' THEN
-        -- Actualizar un nivel existente
         UPDATE Nivel
         SET nivel = p_nivel,
             descripcion = p_descripcion,
             precio = p_precio
         WHERE id = p_id;
         
-        -- Actualizar el video asociado al nivel
         UPDATE NivelVideo
         SET url_video = p_url_video,
             descripcion = p_video_descripcion,
@@ -381,16 +376,13 @@ BEGIN
         WHERE nivel_id = p_id;
 
     ELSEIF p_operacion = 'DELETE' THEN
-        -- Eliminar el video asociado al nivel
         DELETE FROM NivelVideo
         WHERE nivel_id = p_id;
         
-        -- Eliminar el nivel
         DELETE FROM Nivel
         WHERE id = p_id;
 
     ELSEIF p_operacion = 'SELECT_BY_ID' THEN
-        -- Obtener los detalles de un nivel por ID, incluyendo el video
         SELECT Nivel.*, 
                NivelVideo.url_video, 
                NivelVideo.descripcion AS video_descripcion, 
@@ -400,7 +392,6 @@ BEGIN
         WHERE Nivel.id = p_id;
 
     ELSEIF p_operacion = 'SELECT_ALL' THEN
-        -- Obtener todos los niveles de un curso, con su video
         SELECT Nivel.*, 
                NivelVideo.url_video, 
                NivelVideo.descripcion AS video_descripcion, 
@@ -416,6 +407,64 @@ END;
 //
 
 DELIMITER ;
+
+DELIMITER //
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SpMensaje`(
+    IN p_id INT,  
+    IN p_remitente_id INT,  
+    IN p_destinatario_id INT,  
+    IN p_curso_id INT,  
+    IN p_contenido TEXT, 
+    IN p_estado INT,  
+    IN p_operacion VARCHAR(20)  
+)
+BEGIN
+    IF p_operacion = 'INSERT' THEN
+
+        INSERT INTO Mensaje (remitente_id, destinatario_id, curso_id, contenido, estado)
+        VALUES (p_remitente_id, p_destinatario_id, p_curso_id, p_contenido, p_estado);
+
+    ELSEIF p_operacion = 'DELETE' THEN
+
+        DELETE FROM Mensaje
+        WHERE id = p_id;
+
+    ELSEIF p_operacion = 'SELECT_BY_ID' THEN
+
+        SELECT * FROM Mensaje
+        WHERE id = p_id;
+
+    ELSEIF p_operacion = 'SELECT_BY_COURSE' THEN
+
+         SELECT 
+            m.id, 
+            m.remitente_id, 
+            m.destinatario_id, 
+            m.curso_id, 
+            m.contenido, 
+            m.estado, 
+            m.fecha, 
+            u.nombre AS remitente_nombre,
+            u.avatar
+        FROM 
+            Mensaje m
+        JOIN 
+            Usuario u ON m.remitente_id = u.id_usuario
+        WHERE 
+            m.curso_id = p_curso_id
+        ORDER BY 
+            m.fecha DESC;
+
+    END IF;
+
+END;
+//
+
+DELIMITER ;
+
+
+
 
 
 

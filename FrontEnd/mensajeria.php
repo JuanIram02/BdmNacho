@@ -85,7 +85,15 @@ session_start();
             </select>
         </div>
 
-        <div class="form-container mt-4">
+        <!-- Bandeja de mensajes -->
+        <div class="mt-5">
+            <h4>Bandeja de Entrada</h4>
+            <div id="bandejaMensajes" class="bandeja-mensajes">
+                <!-- Mensajes específicos del curso se mostrarán aquí -->
+            </div>
+        </div>
+
+        <div class="mensajes-container mt-4">
             <form id="mensajeriaForm">
                 <div class="mb-3">
                     <label for="mensaje" class="form-label">Mensaje</label>
@@ -94,14 +102,7 @@ session_start();
                 <button type="submit" class="btn btn-custom">Enviar Mensaje</button>
             </form>
         </div>
-
-        <!-- Bandeja de mensajes -->
-        <div class="mt-5">
-            <h4>Bandeja de Entrada</h4>
-            <div id="bandejaMensajes">
-                <!-- Mensajes específicos del curso se mostrarán aquí -->
-            </div>
-        </div>
+        
     </div>
     <!-- Contenedor del Footer -->
     <div id="footer-container"></div>
@@ -112,39 +113,78 @@ session_start();
             // Evento para cambiar el curso
             document.getElementById('cursoSelect').addEventListener('change', function() {
                 const cursoSeleccionado = this.value;
-                cargarMensajes(cursoSeleccionado);
+                if (cursoSeleccionado > 0) {
+                    cargarMensajes(cursoSeleccionado);
+                    
+                } else {
+                    // Si no se selecciona un curso válido, limpiar la bandeja de mensajes
+                    document.getElementById('bandejaMensajes').innerHTML = '';
+                }
             });
 
-            // Función para cargar mensajes según el curso seleccionado
-            function cargarMensajes(curso) {
-                const bandejaMensajes = document.getElementById('bandejaMensajes');
-                bandejaMensajes.innerHTML = ''; // Limpiar mensajes previos
+            let mensajesCargados = []; // Variable global para mantener los mensajes ya cargados
 
-                // Simulación de carga de mensajes
-                if (curso === 'ITSoftware') {
-                    const mensajes = [
-                        {usuario: 'Instructor 1', fecha: '2024-09-15 14:30', texto: 'Hola, ¿tienes alguna pregunta sobre el curso?'},
-                        {usuario: 'Instructor 2', fecha: '2024-09-14 10:00', texto: 'Te recuerdo que la siguiente clase es el lunes.'}
-                    ];
-                    mensajes.forEach(mensaje => {
-                        const nuevoMensaje = document.createElement('div');
-                        nuevoMensaje.classList.add('card', 'mt-3');
-                        nuevoMensaje.innerHTML = `
-                            <div class="card-body">
-                                <img src="ruta/a/imagen.jpg" alt="Imagen de usuario" class="img-thumbnail" width="50">
-                                <strong>${mensaje.usuario}</strong> - <small>Fecha: ${mensaje.fecha}</small>
-                                <p>${mensaje.texto}</p>
-                            </div>
-                        `;
-                        bandejaMensajes.appendChild(nuevoMensaje);
+            function cargarMensajes(cursoId) {
+                const bandejaMensajes = document.getElementById('bandejaMensajes');
+
+                // Realizar una solicitud AJAX para obtener los mensajes del curso seleccionado
+                fetch(`../BackEnd/mensajes/obtenerMensajes.php?id=${cursoId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const mensajesNuevos = data.messages;
+
+                            // Verificar si hay cambios comparando los IDs de los mensajes
+                            const idsMensajesNuevos = mensajesNuevos.map(mensaje => mensaje.id);
+                            const idsMensajesCargados = mensajesCargados.map(mensaje => mensaje.id);
+
+                            if (JSON.stringify(idsMensajesNuevos) === JSON.stringify(idsMensajesCargados)) {
+                                // No hay cambios, no actualizar la bandeja
+                                console.log('No hay nuevos mensajes.');
+                                return;
+                            }
+
+                            // Actualizar la bandeja si hay cambios
+                            bandejaMensajes.innerHTML = ''; // Limpiar mensajes previos
+                            mensajesCargados = mensajesNuevos; // Actualizar los mensajes cargados
+
+                            mensajesNuevos.forEach(mensaje => {
+                                const avatar = mensaje.avatar && mensaje.avatar !== "" ? mensaje.avatar : "../Imagenes/avatar.jpg";
+
+                                const nuevoMensaje = document.createElement('div');
+                                nuevoMensaje.classList.add('card', 'mt-3');
+                                nuevoMensaje.innerHTML = `
+                                    <div class="card-body">
+                                        <img src="${avatar}" alt="Imagen de usuario" class="img-thumbnail" width="50">
+                                        <strong>${mensaje.remitente_nombre}</strong> - <small>Fecha: ${mensaje.fecha}</small>
+                                        <p>${mensaje.contenido}</p>
+                                    </div>
+                                `;
+                                bandejaMensajes.prepend(nuevoMensaje);
+                            });
+
+                            setTimeout(() => {
+                                bandejaMensajes.scrollTop = bandejaMensajes.scrollHeight + 1; // Desplazarse ligeramente más allá
+                            }, 100); // Pequeño retraso para asegurar que el mensaje se haya renderizado antes de hacer el scroll
+                        } else {
+                            bandejaMensajes.innerHTML = '<p>No se encontraron mensajes para este curso.</p>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al cargar los mensajes:', error);
+                        bandejaMensajes.innerHTML = '<p>Error al cargar los mensajes.</p>';
                     });
-                } else if (curso === 'Marketing101') {
-                    // Agregar lógica para cargar mensajes del curso 'Marketing101'
-                }
-                // Agregar más condiciones para otros cursos
             }
 
-            // Evento para enviar mensaje
+            // Configurar un intervalo para recargar mensajes cada 5 segundos
+            setInterval(() => {
+                const cursoSeleccionado = document.getElementById('cursoSelect').value;
+                if (cursoSeleccionado) {
+                    cargarMensajes(cursoSeleccionado);
+                }
+            }, 5000);
+
+
             document.getElementById('mensajeriaForm').addEventListener('submit', function(event) {
                 event.preventDefault();
 
@@ -156,30 +196,72 @@ session_start();
 
                 const mensajeText = document.getElementById('mensaje').value;
 
-                // Crear un nuevo mensaje
-                const nuevoMensaje = document.createElement('div');
-                nuevoMensaje.classList.add('card', 'mt-3');
-                nuevoMensaje.innerHTML = `
-                    <div class="card-body">
-                        <img src="ruta/a/imagen.jpg" alt="Imagen de usuario" class="img-thumbnail" width="50">
-                        <strong>Usuario</strong> - <small>Fecha: ${new Date().toLocaleDateString()} Hora: ${new Date().toLocaleTimeString()}</small>
-                        <p>${mensajeText}</p>
-                    </div>
-                `;
+                const mensajeData = {
+                    curso_id: cursoSeleccionado,
+                    contenido: mensajeText,
+                };
 
-                // Añadir el mensaje a la bandeja de mensajes
-                document.getElementById('bandejaMensajes').prepend(nuevoMensaje);
+                fetch('../BackEnd/mensajes/enviarMensaje.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(mensajeData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {              
+                        cargarMensajes(cursoSeleccionado);
+                    } else {
+                        alert('Error al enviar el mensaje');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al enviar el mensaje:', error);
+                    alert('Error al enviar el mensaje');
+                });
 
-                // Limpiar el formulario
                 document.getElementById('mensajeriaForm').reset();
             });
-</section>
-            // Cargar el menú y el footer
-            fetch('menu.php')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('menu-container').innerHTML = data;
-                });
+
+
+            $(document).ready(function () {
+                function loadCourses() {
+                    $.ajax({
+                        type: "GET", 
+                        url: "../BackEnd/cursos/AllCursos.php", 
+                        dataType: "json",
+                        beforeSend: function () {
+                            $("#cursoSelect").html('<option class="text-center">Cargando cursos...</option>');
+                        },
+                        success: function (response) {
+                            $("#cursoSelect").empty();
+
+                            if (response.status === "success") {
+                                const cursos = response.cursos;
+                                $("#cursoSelect").append("<option value='' selected disabled>Selecciona un curso</option>");
+                                console.log(cursos)
+
+                                cursos.forEach(function (curso) {
+                                    const card = `
+                                        <option value="${curso.id_curso}">${curso.titulo}</option>
+                                    `;
+                                    $("#cursoSelect").append(card);
+                                });
+                            } else {
+                                $("#courses-container").html('<p class="text-center">No se encontraron cursos disponibles.</p>');
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("Error al cargar los cursos:", error);
+                            $("#courses-container").html('<p class="text-center text-danger">Error al cargar los cursos. Intenta nuevamente más tarde.</p>');
+                        }
+                    });
+                }
+
+                loadCourses();
+            });
+
 
             fetch('footer.html')
                 .then(response => response.text())

@@ -130,7 +130,7 @@ session_start();
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="3" class="text-end"><strong>Total de ingresos (Tarjeta de crédito):</strong></td>
+                    <td colspan="3" class="text-end"><strong>Total de ingresos (Tarjeta):</strong></td>
                     <td>$18,000.00</td>
                 </tr>
                 <tr>

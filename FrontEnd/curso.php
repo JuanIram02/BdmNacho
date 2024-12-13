@@ -77,9 +77,6 @@ session_start();
     <div class="container mt-5">
         <div class="course-header">
             <h1>Curso de IT & Software</h1>
-            <div class="form-group">
-                <label for="nivelSelect">Niveles:</label>
-            </div>
             <p>Costo total: $49.99</p>
         </div>
 

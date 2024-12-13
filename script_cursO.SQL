@@ -109,13 +109,15 @@ CREATE TABLE IF NOT EXISTS Certificado (
 CREATE TABLE IF NOT EXISTS Mensaje (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'Identificación del mensaje',
     remitente_id INT NOT NULL COMMENT 'ID del remitente',
-    destinatario_id INT NOT NULL COMMENT 'ID del destinatario',
+    destinatario_id INT DEFAULT NULL COMMENT 'ID del destinatario',
+    curso_id INT NOT NULL COMMENT 'ID del curso',
     contenido TEXT NOT NULL COMMENT 'Contenido del mensaje',
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Fecha de envío',
     estado INT DEFAULT 1 COMMENT 'Estado del mensaje (1: Enviado, 0: Leído)',
     
     FOREIGN KEY (remitente_id) REFERENCES Usuario(id_usuario) ON DELETE CASCADE,
-    FOREIGN KEY (destinatario_id) REFERENCES Usuario(id_usuario) ON DELETE CASCADE
+    FOREIGN KEY (destinatario_id) REFERENCES Usuario(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (curso_id) REFERENCES Curso(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Comentario (
