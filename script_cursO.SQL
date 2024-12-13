@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS Curso (
 );
 
 INSERT INTO INSERT INTO `categoria` (`NombreCategoria`, `Descripcion`, `fecha_creacion`, `IDUsuario`) 
-    VALUES ( "root", "root", current_timestamp(), 1)
+    VALUES ( "root", "root", current_timestamp(), 1);
 
 CREATE TABLE IF NOT EXISTS CursoCategoria (
     curso_id INT NOT NULL COMMENT 'ID del curso',
