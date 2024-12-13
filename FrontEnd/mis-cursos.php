@@ -72,7 +72,7 @@ session_start();
 <section>
     <div class="container mt-5">
         <h3 class="text-center">Mis Cursos</h3>
-        <div class="row mt-4">
+        <div class="row mt-4" id="courses-container">
             <!-- Ejemplo de curso 1 -->
             <div class="col-md-4">
                 <div class="card course-card">
@@ -115,11 +115,8 @@ session_start();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('menu.php')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('menu-container').innerHTML = data;
-                });
+
+
 
             fetch('footer.html')
                 .then(response => response.text())
@@ -127,6 +124,51 @@ session_start();
                     document.getElementById('footer-container').innerHTML = data;
                 });
         });
+
+        $(document).ready(function () {
+            function loadCourses() {
+                $.ajax({
+                    type: "GET", 
+                    url: "../BackEnd/cursos/misCursos.php", 
+                    dataType: "json",
+                    beforeSend: function () {
+                        $("#courses-container").html('<p class="text-center">Cargando cursos...</p>');
+                    },
+                    success: function (response) {
+                        $("#courses-container").empty();
+
+                        if (response.status === "success") {
+                            const cursos = response.cursos;
+
+                            cursos.forEach(function (curso) {
+                                const card = `
+                                    <div class="col-md-4">
+                                        <div class="card course-card">
+                                            <img src="data:image/jpeg;base64,${curso.imagen}" class="card-img-top" alt="${curso.titulo}">
+                                            <div class="card-body">
+                                                <h5 class="card-title">${curso.titulo}</h5>
+                                                <p class="card-text">${curso.descripcion}</p>
+                                                <p><strong>Costo:</strong> $${curso.precio}</p>
+                                                <a href="curso.php?id=${curso.id_curso}" class="btn btn-green">Ver Curso</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                                $("#courses-container").append(card);
+                            });
+                        } else {
+                            $("#courses-container").html('<p class="text-center">No se encontraron cursos disponibles.</p>');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error al cargar los cursos:", error);
+                        $("#courses-container").html('<p class="text-center text-danger">Error al cargar los cursos. Intenta nuevamente más tarde.</p>');
+                    }
+                });
+            }
+
+            loadCourses();
+        })
     </script>
 </body>
 </html>

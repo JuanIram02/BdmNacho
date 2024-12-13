@@ -177,7 +177,7 @@ BEGIN
         SELECT * FROM Curso
         WHERE fecha_creacion BETWEEN p_fecha_inicio AND p_fecha_fin; 
     END IF;
-
+    
 END;
 //
 
@@ -333,6 +333,9 @@ BEGIN
         FROM Inscripcion
         WHERE curso_id = p_curso_id AND estudiante_id = p_estudiante_id
         LIMIT 1;
+    ELSEIF p_operacion = 'VIEW_BY_ESTUDIANTE' THEN
+        SELECT * FROM vwInscripciones_Cursos
+        WHERE estudiante_id = p_estudiante_id;
     END IF;
 END;
 //
