@@ -243,8 +243,8 @@ session_start();
                                         <td>${curso.fecha_terminacion || "-"}</td>
                                         <td>${curso.estado}</td>
                                         <td>
-                                            ${curso.estado === "Completo" ? 
-                                                `<button class="btn btn-green" onclick="descargarCertificado('${curso.nombre}')">Descargar</button>` : 
+                                            ${curso.estado === "C" ? 
+                                                `<button class="btn btn-green" onclick="descargarCertificado('${curso.nombre_alumno}', '${curso.nombre}')">Descargar</button>` : 
                                                 "-"
                                             }
                                         </td>
@@ -273,7 +273,7 @@ session_start();
         });
     </script>
 <script>
-    async function descargarCertificado(nombreCurso) {
+    async function descargarCertificado(nombreAlumno, nombreCurso) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('landscape', 'mm', 'a4'); // Crear un PDF horizontal
 
@@ -286,14 +286,12 @@ session_start();
             // Dibujar la imagen de fondo
             doc.addImage(img, 'PNG', 0, 0, 297, 210); // Ajustar tamaño y posición según tu diseño
 
-            // Datos del certificado
-            const nombreUsuario = "Nombre del Usuario"; // Esto debería ser dinámico, obteniendo el nombre del usuario actual
             const fecha = new Date().toLocaleDateString();
 
             // Contenido del certificado (superpuesto sobre el diseño)
             doc.setFontSize(20);
             doc.setFont('times', 'bold');
-            doc.text(nombreUsuario, 148.5, 100, null, null, 'center'); // Ajusta la posición según tu diseño
+            doc.text(nombreAlumno, 148.5, 100, null, null, 'center'); // Ajusta la posición según tu diseño
             
             doc.setFontSize(16);
             doc.setFont('times', 'normal');

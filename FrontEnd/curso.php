@@ -300,6 +300,28 @@ session_start();
                             console.error("Error al cargar los niveles:", error);
                         }
                     });
+
+                    $.ajax({
+                        type: "GET", 
+                        url: "../BackEnd/cursos/CursoComprado.php", 
+                        data: { id: idCurso },
+                        dataType: "json",
+                        success: function (response) {
+                            if (response.status === "success") {
+                                if (response.exists) {
+                                    $("#btn-comprar").text("Finalizar curso");
+                                } else {
+                                    $("#btn-comprar").text("Comprar curso");
+                                }
+                            } else {
+                                console.error("Error en la respuesta: ", response.message);
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("Error al verificar el curso:", error);
+                        }
+                    });
+
                 } else {
                     alert('No se proporcionó un ID de curso válido.');
                 }
@@ -319,8 +341,35 @@ session_start();
                 $("#btn-comprar").click(function () {
                     const urlParams = new URLSearchParams(window.location.search);
                     const idCurso = urlParams.get('id');
-                    window.location.href = `comprarcurso.php?id=${idCurso}`;
+
+                    const buttonText = $(this).text();
+
+                    if (buttonText === "Comprar curso") {
+                        window.location.href = `comprarcurso.php?id=${idCurso}`;
+                    } else if (buttonText === "Finalizar curso") {
+
+                        $.ajax({
+                            type: "POST",
+                            url: "../BackEnd/certificados/crearCertificado.php",
+                            data: { idCurso: idCurso },
+                            dataType: "json",
+                            success: function (response) {
+                                if (response.status === "success") {
+                                    alert("¡Curso finalizado con éxito!");
+                                    window.location.href = `Kardex.php`; 
+                                } else {
+                                    alert(response.message);
+                                    window.location.href = `Kardex.php`; 
+                                }
+                            },
+                            error: function (xhr, status, error) {
+                                console.error("Error al finalizar el curso:", error);
+                                alert("Hubo un error en la conexión. Intenta nuevamente.");
+                            }
+                        });
+                    }
                 });
+
             });
         </script>
 

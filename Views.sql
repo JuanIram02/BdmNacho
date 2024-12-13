@@ -36,6 +36,7 @@ SELECT
     p.curso_id,
     cc.categoria_id,
     p.estudiante_id,
+    CONCAT(u.nombre, ' ', u.apellido_P, ' ', u.apellido_M) AS nombre_alumno,
     p.monto AS monto_pago,
     p.forma_pago,
     p.fecha AS fecha_pago,
@@ -55,6 +56,8 @@ INNER JOIN
     Inscripcion i ON p.curso_id = i.curso_id AND p.estudiante_id = i.estudiante_id
 INNER JOIN 
     Curso c ON p.curso_id = c.id
+INNER JOIN 
+    Usuario u ON p.estudiante_id = u.id_usuario
 LEFT JOIN 
     CursoCategoria cc ON c.id = cc.curso_id;
 //

@@ -59,6 +59,7 @@ session_start();
                         <?php echo $_SESSION['nombre_usuario'] ?>
                     </a></li>
                 <!-- <li><a href="Acceptproducto.php">Productos por aceptar</a></li> -->
+                <li><a href="#" onclick="abrirModal()">Crear categoría</a></li>
                 <li><a href="reportesAdmin.php">Reportes de usuarios</a></li>
                 <li><a href="users.php">Chat</a></li>
                 <li><a href="login.php" onclick="CerrarSesion();">Cerrar sesión</a></li>
@@ -73,6 +74,23 @@ session_start();
     ?>
 </header>
 <section>
+<div id="modalCrearCategoria" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="cerrarModal()">&times;</span>
+        <h2 style="text-align: center; margin-bottom: 20px">Crear Categoría</h2>
+        <form id="formCategoria" method="POST">
+            <div>
+                <label for="nombreCategoria">Nombre categoría:</label>
+                <input type="text" id="nombreCategoria" name="nombreCategoria" required>
+            </div>
+            <div style="margin-block: 20px">
+                <label for="descripcion">Descripcion:</label>
+                <input type="text" id="descripcion" name="descripcion" required>
+            </div>
+            <button id="submitCategoria" type="submit" class="btn btn-green">Crear</button>
+        </form>
+    </div>
+</div>
 <div class="container search-bar mt-4">
     <!-- <h3>Filtro de cursos</h3> -->
     <div class="row w-75 m-auto m-box-2" style="margin-block: 10px;">
@@ -134,6 +152,22 @@ session_start();
         <div id="footer-container"></div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function abrirModal() {
+            document.getElementById("modalCrearCategoria").style.display = "block";
+        }
+
+        // Función para cerrar el modal
+        function cerrarModal() {
+            document.getElementById("modalCrearCategoria").style.display = "none";
+        }
+
+        // Cerrar el modal al hacer clic fuera de él
+        window.onclick = function(event) {
+            const modal = document.getElementById("modalCrearCategoria");
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
         document.addEventListener('DOMContentLoaded', function() {
             fetch('menu.php')
                 .then(response => response.text())
@@ -183,6 +217,50 @@ session_start();
             }
 
             loadCategories();
+
+            $("#formCategoria").submit(function (event) {
+                event.preventDefault();
+
+                const nombreCategoria = $("#nombreCategoria").val();
+                const descripcion = $("#descripcion").val();
+
+                console.log(nombreCategoria)
+                console.log(descripcion)
+
+                if (!nombreCategoria || !descripcion) {
+                    alert("Por favor, completa todos los campos.");
+                    return;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "../BackEnd/categorias/crearCategoria.php", 
+                    data: { 
+                        nombreCategoria: nombreCategoria, 
+                        descripcion: descripcion 
+                    },
+                    dataType: "json",
+                    beforeSend: function () {
+                        $("#submitCategoria").text("Creando...").prop("disabled", true);
+                    },
+                    success: function (response) {
+                        if (response.status === "success") {
+                            alert("¡Categoría creada exitosamente!");
+                            loadCategories();
+                            cerrarModal();
+                        } else {
+                            alert(`Error: ${response.message}`);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error en la solicitud:", error);
+                        alert("Ocurrió un error al intentar crear la categoría. Por favor, inténtalo más tarde.");
+                    },
+                    complete: function () {
+                        $("#submitCategoria").text("Crear").prop("disabled", false);
+                    }
+                });
+            });
         });
 
 
@@ -344,6 +422,7 @@ session_start();
                     loadCourses();
                 }
             });
+
         });
 
     </script>

@@ -285,7 +285,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `SpInscripcion`(
     IN p_progreso_curso INT,
     IN p_estado CHAR(1),
     IN p_precio_pagado DECIMAL(10, 2),
-    IN p_operacion VARCHAR(20)
+    IN p_operacion VARCHAR(30)
 )
 BEGIN
     IF p_operacion = 'INSERT' THEN
@@ -329,7 +329,7 @@ BEGIN
         SELECT * FROM Inscripcion
         WHERE estado = p_estado;
     ELSEIF p_operacion = 'SELECT_ESTUDIANTE_CURSO' THEN
-        SELECT 1 AS Existe
+        SELECT *
         FROM Inscripcion
         WHERE curso_id = p_curso_id AND estudiante_id = p_estudiante_id
         LIMIT 1;
@@ -339,6 +339,7 @@ BEGIN
     ELSEIF p_operacion = 'VIEW_KARDEX' THEN
         SELECT DISTINCT
             curso_id,
+            nombre_alumno,
             titulo_curso,
             descripcion_curso,
             fecha_inscripcion,
@@ -499,6 +500,100 @@ BEGIN
             m.curso_id = p_curso_id
         ORDER BY 
             m.fecha DESC;
+
+    END IF;
+
+END;
+//
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SpCertificado`(
+    IN p_id INT, 
+    IN p_estudiante_id INT, 
+    IN p_curso_id INT, 
+    IN p_fecha_emision DATE, 
+    IN p_nombre_estudiante VARCHAR(100), 
+    IN p_nombre_curso VARCHAR(255), 
+    IN p_nombre_instructor VARCHAR(100), 
+    IN p_operacion VARCHAR(30)
+)
+BEGIN
+
+    DECLARE v_nombre_estudiante VARCHAR(100);
+    DECLARE v_nombre_curso VARCHAR(255);
+    DECLARE v_nombre_instructor VARCHAR(100);
+    DECLARE v_fecha_emision DATE;
+
+    IF p_operacion = 'INSERT' THEN
+        IF EXISTS (
+            SELECT 1 
+            FROM Certificado
+            WHERE estudiante_id = p_estudiante_id 
+              AND curso_id = p_curso_id
+        ) THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Ya existe un certificado.';
+        ELSE
+            SELECT 
+                U.nombre AS nombre_estudiante,
+                C.titulo AS nombre_curso,
+                U2.nombre AS nombre_instructor
+            INTO 
+                v_nombre_estudiante, 
+                v_nombre_curso, 
+                v_nombre_instructor
+            FROM 
+                Usuario U
+                JOIN Curso C ON C.id = p_curso_id
+                JOIN Usuario U2 ON C.instructor_id = U2.id_usuario
+            WHERE 
+                U.id_usuario = p_estudiante_id;
+
+            SET v_fecha_emision = CURDATE();
+
+            INSERT INTO Certificado (estudiante_id, curso_id, fecha_emision, nombre_estudiante, nombre_curso, nombre_instructor)
+            VALUES (p_estudiante_id, p_curso_id, v_fecha_emision, v_nombre_estudiante, v_nombre_curso, v_nombre_instructor);
+        END IF;
+
+    ELSEIF p_operacion = 'UPDATE' THEN
+        UPDATE Certificado
+        SET estudiante_id = p_estudiante_id,
+            curso_id = p_curso_id,
+            fecha_emision = p_fecha_emision,
+            nombre_estudiante = p_nombre_estudiante,
+            nombre_curso = p_nombre_curso,
+            nombre_instructor = p_nombre_instructor
+        WHERE id = p_id;
+
+    ELSEIF p_operacion = 'DELETE' THEN
+        DELETE FROM Certificado
+        WHERE id = p_id;
+
+    ELSEIF p_operacion = 'SELECT_BY_ID' THEN
+        SELECT * 
+        FROM Certificado
+        WHERE id = p_id;
+
+    ELSEIF p_operacion = 'SELECT_BY_ESTUDIANTE' THEN
+        SELECT * 
+        FROM Certificado
+        WHERE estudiante_id = p_estudiante_id
+        ORDER BY fecha_emision DESC;
+
+    ELSEIF p_operacion = 'SELECT_BY_CURSO' THEN
+        SELECT * 
+        FROM Certificado
+        WHERE curso_id = p_curso_id
+        ORDER BY fecha_emision DESC;
+
+    ELSEIF p_operacion = 'SELECT_BY_ESTUDIANTE_CURSO' THEN
+        SELECT * 
+        FROM Certificado
+        WHERE estudiante_id = p_estudiante_id AND curso_id = p_curso_id
+        ORDER BY fecha_emision DESC;
 
     END IF;
 

@@ -10,7 +10,7 @@ $start_date = isset($_GET['start_date']) && !empty($_GET['start_date']) ? $_GET[
 $end_date = isset($_GET['end_date']) && !empty($_GET['end_date']) ? $_GET['end_date'] : NULL;
 $category = isset($_GET['category']) && !empty($_GET['category']) ? $_GET['category'] : NULL; 
 
-$progreso = ($_GET['completed'] ? '100' : 'NULL');
+$progreso = ($_GET['completed'] ? '100' : NULL);
 $active = ($_GET['active'] ? 'A' : NULL);
 
 session_start();
@@ -31,6 +31,7 @@ if ($result) {
         $inscripciones[] = [
             "curso_id" => $row["curso_id"],
             "nombre" => $row["titulo_curso"], // Título del curso
+            "nombre_alumno" => $row["nombre_alumno"], // Título del curso
             "progreso" => $row["progreso_curso"],
             "fecha_inscripcion" => $row["fecha_inscripcion"],
             "ultimo_acceso" => $row["fecha_ultima"],
