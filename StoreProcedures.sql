@@ -336,6 +336,47 @@ BEGIN
     ELSEIF p_operacion = 'VIEW_BY_ESTUDIANTE' THEN
         SELECT * FROM vwInscripciones_Cursos
         WHERE estudiante_id = p_estudiante_id;
+    ELSEIF p_operacion = 'VIEW_KARDEX' THEN
+        SELECT DISTINCT
+            curso_id,
+            titulo_curso,
+            descripcion_curso,
+            fecha_inscripcion,
+            fecha_ultima,
+            fecha_terminacion,
+            progreso_curso,
+            estado_inscripcion,
+            precio_pagado
+        FROM vwKardex
+        WHERE (p_estudiante_id IS NULL OR estudiante_id = p_estudiante_id)
+          AND (p_fecha_inscripcion IS NULL OR fecha_inscripcion >= p_fecha_inscripcion)
+          AND (p_fecha_terminacion IS NULL OR fecha_inscripcion <= p_fecha_terminacion)
+          AND (p_progreso_curso IS NULL OR progreso_curso = p_progreso_curso)
+          AND (p_estado IS NULL OR estado_curso = p_estado)
+          AND (p_curso_id IS NULL OR categoria_id = p_curso_id);
+    ELSEIF p_operacion = 'VIEW_VENTAS' THEN
+        SELECT DISTINCT
+            nombre_curso,
+            alumnos_inscritos,
+            nivel_promedio_cursado,
+            total_ingresos,
+            fecha_pago,
+            forma_pago
+        FROM vwReporteVentas
+        WHERE (p_curso_id IS NULL OR categoria_id = p_curso_id)      
+        AND (estado_curso = p_estado OR p_estado IS NULL)  
+        AND (fecha_pago >= p_fecha_inscripcion OR p_fecha_inscripcion IS NULL)
+        AND (fecha_pago <= p_fecha_terminacion OR p_fecha_terminacion IS NULL);  
+    ELSEIF p_operacion = 'VIEW_Pagos' THEN
+        SELECT DISTINCT       	
+            nombre_alumno,
+            fecha_inscripcion,
+            nivel_avance,
+            precio_pagado,
+            forma_pago
+        FROM vwReportePagos
+        WHERE (fecha_inscripcion >= p_fecha_inscripcion OR p_fecha_inscripcion IS NULL)
+        AND (fecha_inscripcion <= p_fecha_terminacion OR p_fecha_terminacion IS NULL);  
     END IF;
 END;
 //

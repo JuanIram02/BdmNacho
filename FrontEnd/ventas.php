@@ -84,7 +84,7 @@ session_start();
                 </div>
                 <div class="col-md-4 mb-3">
                     <label for="category" class="form-label">Categoría:</label>
-                    <select class="form-select" id="category">
+                    <select class="form-select" id="categories-select">
                         <option value="">Todas</option>
                         <option value="it">IT & Software</option>
                         <option value="marketing">Marketing</option>
@@ -112,7 +112,7 @@ session_start();
                     <th>Total de ingresos</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="bodyVentas">
                 <!-- Curso 1 -->
                 <tr>
                     <td>Curso de Programación en Python</td>
@@ -129,11 +129,11 @@ session_start();
                 </tr>
             </tbody>
             <tfoot>
-                <tr>
+                <tr id="total-tarjeta">
                     <td colspan="3" class="text-end"><strong>Total de ingresos (Tarjeta):</strong></td>
                     <td>$18,000.00</td>
                 </tr>
-                <tr>
+                <tr id="total-paypal">
                     <td colspan="3" class="text-end"><strong>Total de ingresos (Paypal):</strong></td>
                     <td>$5,500.00</td>
                 </tr>
@@ -152,7 +152,7 @@ session_start();
                 <th>Forma de pago</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="bodyPagos">
             <!-- Alumno 1 -->
             <tr>
                 <td>Juan Pérez</td>
@@ -172,7 +172,7 @@ session_start();
             <!-- Aqui se puede repetir según haya más aliumnos -->
         </tbody>
         <tfoot>
-            <tr>
+            <tr id="total-pagos">
                 <td colspan="4" class="text-end"><strong>Total de ingresos:</strong></td>
                 <td>$220.00</td>
             </tr>
@@ -187,17 +187,338 @@ session_start();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('menu.php')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('menu-container').innerHTML = data;
-                });
 
             fetch('footer.html')
                 .then(response => response.text())
                 .then(data => {
                     document.getElementById('footer-container').innerHTML = data;
                 });
+        });
+
+        $(document).ready(function () {
+            function loadCategories() {
+                $.ajax({
+                    type: "GET", 
+                    url: "../BackEnd/categorias/AllCategorias.php", 
+                    dataType: "json",
+                    beforeSend: function () {
+                        $("#categories-select").html('<option value="">Cargando categorías...</option>');
+                    },
+                    success: function (response) {
+                        $("#categories-select").empty();
+
+                        if (response.status === "success") {
+                            const categorias = response.categorias;
+
+                            $("#categories-select").append('<option value="">Selecciona una categoría</option>');
+
+                            categorias.forEach(function (categoria) {
+                                if(categoria.nombre !== "root"){
+                                    const option = `<option value="${categoria.id_categoria}">${categoria.nombre}</option>`;
+                                    $("#categories-select").append(option);
+                                }
+                            });
+                        } else {
+                            $("#categories-select").html('<option value="">No se encontraron categorías</option>');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error al cargar las categorías:", error);
+                        $("#categories-select").html('<option value="">Error al cargar categorías</option>');
+                    }
+                });
+            }
+
+            loadCategories();
+
+            function cargarVentas() {
+
+                const startDate = $("#startDate").val();
+                const endDate = $("#endDate").val();
+                const category = $("#categories-select").val();
+                const active = $("#activeCourses").is(":checked") ? 1 : 0;
+
+                $.ajax({
+                    type: "GET",
+                    url: "../BackEnd/pagos/reporteVentas.php",
+                    data: {
+                        start_date: startDate,
+                        end_date: endDate,
+                        category: category,
+                        active: active
+                    },
+                    dataType: "json",
+                    beforeSend: function () {
+                        $("#bodyVentas").html('<tr><td colspan="6" class="text-center">Cargando datos...</td></tr>');
+                    },
+                    success: function (response) {
+                        $("#bodyVentas").empty();
+
+                        if (response.status === "success") {
+                            const ventas = response.ventas;
+                            let totalTarjeta = 0;
+                            let totalPaypal = 0;
+
+                            if (ventas.length === 0) {
+                                $("#bodyVentas").html('<tr><td colspan="6" class="text-center">No se encontraron ventas.</td></tr>');
+                                return;
+                            }
+
+                            // Renderizar las ventas en la tabla
+                            ventas.forEach(function (venta) {
+                                // Acumular los ingresos por forma de pago
+                                if (venta.forma_pago === 't') {
+                                    totalTarjeta += parseFloat(venta.total_ingresos.replace(/[^0-9.-]+/g, "")); // Eliminamos símbolos de moneda
+                                } else if (venta.forma_pago === 'p') {
+                                    totalPaypal += parseFloat(venta.total_ingresos.replace(/[^0-9.-]+/g, "")); // Eliminamos símbolos de moneda
+                                }
+
+                                const row = `
+                                    <tr>
+                                        <td>${venta.nombre_curso}</td>
+                                        <td>${venta.alumnos_inscritos}</td>
+                                        <td>${venta.nivel_promedio_cursado}%</td>
+                                        <td>${venta.total_ingresos}</td>
+                                    </tr>
+                                `;
+                                $("#bodyVentas").append(row);
+                            });
+
+                            // Actualizar los totales en el pie de la tabla
+                            $("#total-tarjeta td:last").text(`$${totalTarjeta.toFixed(2)}`);
+                            $("#total-paypal td:last").text(`$${totalPaypal.toFixed(2)}`);
+
+                        } else {
+                            $("#bodyVentas").html(`<tr><td colspan="6" class="text-center">${response.message}</td></tr>`);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error al cargar las ventas:", error);
+                        $("#bodyVentas").html('<tr><td colspan="6" class="text-center text-danger">Error al cargar los datos. Intenta nuevamente más tarde.</td></tr>');
+                    }
+                });
+
+            }
+
+            cargarVentas();
+
+            // Recargar Kardex cuando cambien los filtros
+            $("#startDate, #endDate, #categories-select, #activeCourses").change(function () {
+                cargarVentas();
+            });
+
+            function cargarVentas() {
+
+                const startDate = $("#startDate").val();
+                const endDate = $("#endDate").val();
+                const category = $("#categories-select").val();
+                const active = $("#activeCourses").is(":checked") ? 1 : 0;
+
+                $.ajax({
+                    type: "GET",
+                    url: "../BackEnd/pagos/reporteVentas.php",
+                    data: {
+                        start_date: startDate,
+                        end_date: endDate,
+                        category: category,
+                        active: active
+                    },
+                    dataType: "json",
+                    beforeSend: function () {
+                        $("#bodyVentas").html('<tr><td colspan="6" class="text-center">Cargando datos...</td></tr>');
+                    },
+                    success: function (response) {
+                        $("#bodyVentas").empty();
+
+                        if (response.status === "success") {
+                            const ventas = response.ventas;
+                            let totalTarjeta = 0;
+                            let totalPaypal = 0;
+
+                            if (ventas.length === 0) {
+                                $("#bodyVentas").html('<tr><td colspan="6" class="text-center">No se encontraron ventas.</td></tr>');
+                                return;
+                            }
+
+                            // Renderizar las ventas en la tabla
+                            ventas.forEach(function (venta) {
+                                // Acumular los ingresos por forma de pago
+                                if (venta.forma_pago === 't') {
+                                    totalTarjeta += parseFloat(venta.total_ingresos.replace(/[^0-9.-]+/g, "")); // Eliminamos símbolos de moneda
+                                } else if (venta.forma_pago === 'p') {
+                                    totalPaypal += parseFloat(venta.total_ingresos.replace(/[^0-9.-]+/g, "")); // Eliminamos símbolos de moneda
+                                }
+
+                                const row = `
+                                    <tr>
+                                        <td>${venta.nombre_curso}</td>
+                                        <td>${venta.alumnos_inscritos}</td>
+                                        <td>${venta.nivel_promedio_cursado}%</td>
+                                        <td>${venta.total_ingresos}</td>
+                                    </tr>
+                                `;
+                                $("#bodyVentas").append(row);
+                            });
+
+                            // Actualizar los totales en el pie de la tabla
+                            $("#total-tarjeta td:last").text(`$${totalTarjeta.toFixed(2)}`);
+                            $("#total-paypal td:last").text(`$${totalPaypal.toFixed(2)}`);
+
+                        } else {
+                            $("#bodyVentas").html(`<tr><td colspan="6" class="text-center">${response.message}</td></tr>`);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error al cargar las ventas:", error);
+                        $("#bodyVentas").html('<tr><td colspan="6" class="text-center text-danger">Error al cargar los datos. Intenta nuevamente más tarde.</td></tr>');
+                    }
+                });
+
+            }
+
+            cargarVentas();
+
+            // Recargar Kardex cuando cambien los filtros
+            $("#startDate, #endDate, #categories-select, #activeCourses").change(function () {
+                cargarVentas();
+            });
+
+            function cargarVentas() {
+
+                const startDate = $("#startDate").val();
+                const endDate = $("#endDate").val();
+                const category = $("#categories-select").val();
+                const active = $("#activeCourses").is(":checked") ? 1 : 0;
+
+                $.ajax({
+                    type: "GET",
+                    url: "../BackEnd/pagos/reporteVentas.php",
+                    data: {
+                        start_date: startDate,
+                        end_date: endDate,
+                        category: category,
+                        active: active
+                    },
+                    dataType: "json",
+                    beforeSend: function () {
+                        $("#bodyVentas").html('<tr><td colspan="6" class="text-center">Cargando datos...</td></tr>');
+                    },
+                    success: function (response) {
+                        $("#bodyVentas").empty();
+
+                        if (response.status === "success") {
+                            const ventas = response.ventas;
+                            let totalTarjeta = 0;
+                            let totalPaypal = 0;
+
+                            if (ventas.length === 0) {
+                                $("#bodyVentas").html('<tr><td colspan="6" class="text-center">No se encontraron ventas.</td></tr>');
+                                return;
+                            }
+
+                            // Renderizar las ventas en la tabla
+                            ventas.forEach(function (venta) {
+                                // Acumular los ingresos por forma de pago
+                                if (venta.forma_pago === 't') {
+                                    totalTarjeta += parseFloat(venta.total_ingresos.replace(/[^0-9.-]+/g, "")); // Eliminamos símbolos de moneda
+                                } else if (venta.forma_pago === 'p') {
+                                    totalPaypal += parseFloat(venta.total_ingresos.replace(/[^0-9.-]+/g, "")); // Eliminamos símbolos de moneda
+                                }
+
+                                const row = `
+                                    <tr>
+                                        <td>${venta.nombre_curso}</td>
+                                        <td>${venta.alumnos_inscritos}</td>
+                                        <td>${venta.nivel_promedio_cursado}%</td>
+                                        <td>${venta.total_ingresos}</td>
+                                    </tr>
+                                `;
+                                $("#bodyVentas").append(row);
+                            });
+
+                            // Actualizar los totales en el pie de la tabla
+                            $("#total-tarjeta td:last").text(`$${totalTarjeta.toFixed(2)}`);
+                            $("#total-paypal td:last").text(`$${totalPaypal.toFixed(2)}`);
+
+                        } else {
+                            $("#bodyVentas").html(`<tr><td colspan="6" class="text-center">${response.message}</td></tr>`);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error al cargar las ventas:", error);
+                        $("#bodyVentas").html('<tr><td colspan="6" class="text-center text-danger">Error al cargar los datos. Intenta nuevamente más tarde.</td></tr>');
+                    }
+                });
+
+            }
+
+            cargarVentas();
+
+            function cargarPagos() {
+
+                const startDate = $("#startDate").val();
+                const endDate = $("#endDate").val();
+
+                $.ajax({
+                    type: "GET",
+                    url: "../BackEnd/pagos/reportePagos.php",
+                    data: {
+                        start_date: startDate,
+                        end_date: endDate,
+                    },
+                    dataType: "json",
+                    beforeSend: function () {
+                        $("#bodyPagos").html('<tr><td colspan="6" class="text-center">Cargando datos...</td></tr>');
+                    },
+                    success: function (response) {
+                        $("#bodyPagos").empty();
+
+                        if (response.status === "success") {
+                            const pagos = response.pagos;
+
+                            if (pagos.length === 0) {
+                                $("#bodyPagos").html('<tr><td colspan="6" class="text-center">No se encontraron pagos.</td></tr>');
+                                return;
+                            }
+
+                            let totalPagos = 0;
+
+                            pagos.forEach(function (pago) {
+                                const row = `
+                                    <tr>
+                                        <td>${pago.nombre_alumno}</td>
+                                        <td>${pago.fecha_inscripcion}</td>
+                                        <td>${pago.nivel_avance}%</td>
+                                        <td>${pago.precio_pagado}</td>
+                                        <td>${pago.forma_pago}</td>
+                                    </tr>
+                                `;
+                                $("#bodyPagos").append(row);
+
+                                totalPagos += parseFloat(pago.precio_pagado.replace(/[^0-9.-]+/g, "")); // Remover el símbolo '$' y convertir a número
+
+                            });
+
+                            $("#total-pagos td:last").text(`$${totalPagos.toFixed(2)}`);
+
+                        } else {
+                            $("#bodyPagos").html(`<tr><td colspan="6" class="text-center">${response.message}</td></tr>`);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error al cargar los pagos:", error);
+                        $("#bodyPagos").html('<tr><td colspan="6" class="text-center text-danger">Error al cargar los datos. Intenta nuevamente más tarde.</td></tr>');
+                    }
+                });
+
+            }
+
+            cargarPagos();
+
+            $("#startDate, #endDate, #categories-select, #activeCourses").change(function () {
+                cargarVentas();
+                cargarPagos();
+            });
         });
     </script>
 </body>

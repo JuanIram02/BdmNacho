@@ -85,7 +85,7 @@ session_start();
                 </div>
                 <div class="col-md-4 mb-3">
                     <label for="category" class="form-label">Categoría:</label>
-                    <select class="form-select" id="category">
+                    <select class="form-select" id="categories-select">
                         <option value="">Todas</option>
                         <option value="it">IT & Software</option>
                         <option value="marketing">Marketing</option>
@@ -154,17 +154,122 @@ session_start();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('menu.php')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('menu-container').innerHTML = data;
-                });
 
             fetch('footer.html')
                 .then(response => response.text())
                 .then(data => {
                     document.getElementById('footer-container').innerHTML = data;
                 });
+        });
+
+        $(document).ready(function () {
+            function loadCategories() {
+                $.ajax({
+                    type: "GET", 
+                    url: "../BackEnd/categorias/AllCategorias.php", 
+                    dataType: "json",
+                    beforeSend: function () {
+                        $("#categories-select").html('<option value="">Cargando categorías...</option>');
+                    },
+                    success: function (response) {
+                        $("#categories-select").empty();
+
+                        if (response.status === "success") {
+                            const categorias = response.categorias;
+
+                            $("#categories-select").append('<option value="">Selecciona una categoría</option>');
+
+                            categorias.forEach(function (categoria) {
+                                if(categoria.nombre !== "root"){
+                                    const option = `<option value="${categoria.id_categoria}">${categoria.nombre}</option>`;
+                                    $("#categories-select").append(option);
+                                }
+                            });
+                        } else {
+                            $("#categories-select").html('<option value="">No se encontraron categorías</option>');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error al cargar las categorías:", error);
+                        $("#categories-select").html('<option value="">Error al cargar categorías</option>');
+                    }
+                });
+            }
+
+            loadCategories();
+
+            function cargarKardex() {
+                // Obtener valores de los filtros
+                const startDate = $("#startDate").val();
+                const endDate = $("#endDate").val();
+                const category = $("#categories-select").val();
+                const completed = $("#completedCourses").is(":checked") ? 1 : 0;
+                const active = $("#activeCourses").is(":checked") ? 1 : 0;
+
+                // Enviar los valores como parámetros GET
+                $.ajax({
+                    type: "GET",
+                    url: "../BackEnd/cursos/kardex.php",
+                    data: {
+                        start_date: startDate,
+                        end_date: endDate,
+                        category: category,
+                        completed: completed,
+                        active: active
+                    },
+                    dataType: "json",
+                    beforeSend: function () {
+                        $("tbody").html('<tr><td colspan="7" class="text-center">Cargando datos...</td></tr>');
+                    },
+                    success: function (response) {
+                        $("tbody").empty();
+
+                        if (response.status === "success") {
+                            const cursos = response.cursos;
+
+                            if (cursos.length === 0) {
+                                $("tbody").html('<tr><td colspan="7" class="text-center">No se encontraron cursos.</td></tr>');
+                                return;
+                            }
+
+                            // Renderizar los cursos en la tabla
+                            cursos.forEach(function (curso) {
+                                const row = `
+                                    <tr>
+                                        <td>${curso.nombre}</td>
+                                        <td>${curso.progreso}%</td>
+                                        <td>${curso.fecha_inscripcion || "-"}</td>
+                                        <td>${curso.ultimo_acceso || "-"}</td>
+                                        <td>${curso.fecha_terminacion || "-"}</td>
+                                        <td>${curso.estado}</td>
+                                        <td>
+                                            ${curso.estado === "Completo" ? 
+                                                `<button class="btn btn-green" onclick="descargarCertificado('${curso.nombre}')">Descargar</button>` : 
+                                                "-"
+                                            }
+                                        </td>
+                                    </tr>
+                                `;
+                                $("tbody").append(row);
+                            });
+                        } else {
+                            $("tbody").html(`<tr><td colspan="7" class="text-center">${response.message}</td></tr>`);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error al cargar el Kardex:", error);
+                        $("tbody").html('<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos. Intenta nuevamente más tarde.</td></tr>');
+                    }
+                });
+            }
+
+            cargarKardex();
+
+            // Recargar Kardex cuando cambien los filtros
+            $("#startDate, #endDate, #categories-select, #completedCourses, #activeCourses").change(function () {
+                cargarKardex();
+            });
+
         });
     </script>
 <script>

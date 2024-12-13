@@ -166,7 +166,7 @@ session_start();
                             $("#categories-select").append('<option value="">Selecciona una categoría</option>');
 
                             categorias.forEach(function (categoria) {
-                                if(categoria.nombre !== root){
+                                if(categoria.nombre !== "root"){
                                     const option = `<option value="${categoria.id_categoria}">${categoria.nombre}</option>`;
                                     $("#categories-select").append(option);
                                 }
